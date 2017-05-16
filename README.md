@@ -18,7 +18,5 @@ The library supports Java 8 and the JavaFX framework. If support for JavaFX is *
 ## Links
 See the [roadmap](https://trello.com/b/8oolmwiW)  
 See the [online documentation](https://ralleytn.github.io/SimpleImage/)  
-See the [changelog](https://github.com/RalleYTN/SimpleImage/blob/master/CHANGELOG.md)
-
-
-[Downloads](https://github.com/RalleYTN/SimpleImage/releases)
+See the [changelog](https://github.com/RalleYTN/SimpleImage/blob/master/CHANGELOG.md)  
+See the [Download Page](https://github.com/RalleYTN/SimpleImage/releases)
