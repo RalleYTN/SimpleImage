@@ -1,37 +1,21 @@
-## Welcome to GitHub Pages
+# Description
+SimpleImage is a library that was written to simplify image processing in Java.
+Complex processing can be done in a single line of code and is highly readable and maintainable.
+The library wasn't optimized for game development! It's meant for basic GUI applications.
+The library supports Java 8 and the JavaFX framework. If support for JavaFX is *not* needed, you simply shouldn't use the `simple-image-fx_vX.X.X.jar`.
 
-You can use the [editor on GitHub](https://github.com/RalleYTN/SimpleImage/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+## Features
+- Reading/Writing images
+- JavaFX support
+- Converting SimpleImage instances to BufferedImage instances
+- Fast image filtering
+- Pre-coded image filters
+- Mirroring images on both axis
+- Basic editing functions
+- Taking screenshots
+- Rotate/Scale images
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/RalleYTN/SimpleImage/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## Links
+See the [roadmap](https://trello.com/b/8oolmwiW)  
+See the online documentation  
+See the changelog
