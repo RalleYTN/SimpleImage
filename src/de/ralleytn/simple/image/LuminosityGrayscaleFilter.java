@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Grayscale filter that mixes red, green and blue channel in specific ratios.
@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class LuminosityGrayscaleFilter implements BiConsumer<int[][], int[][]>{
+public class LuminosityGrayscaleFilter extends Filter {
 
 	private float luminosityR;
 	private float luminosityG;
@@ -67,23 +67,32 @@ public class LuminosityGrayscaleFilter implements BiConsumer<int[][], int[][]>{
 	}
 	
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int alpha = ColorUtils.getAlpha(pixel);
-				int red = (int)(ColorUtils.getRed(pixel) * this.luminosityR);
-				int green = (int)(ColorUtils.getGreen(pixel) * this.luminosityG);
-				int blue = (int)(ColorUtils.getBlue(pixel) * this.luminosityB);
-				int gray = red + green + blue;
+				int srcPixel = source[x][y];
 				
-				target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+					
+					int alpha = ColorUtils.getAlpha(srcPixel);
+					int red = (int)(ColorUtils.getRed(srcPixel) * this.luminosityR);
+					int green = (int)(ColorUtils.getGreen(srcPixel) * this.luminosityG);
+					int blue = (int)(ColorUtils.getBlue(srcPixel) * this.luminosityB);
+					int gray = red + green + blue;
+					
+					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
+				}
 			}
 		}
 	}

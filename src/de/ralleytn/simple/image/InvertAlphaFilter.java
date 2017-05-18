@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Filter that inverts the alpha channel of an image.
@@ -32,20 +32,21 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class InvertAlphaFilter implements BiConsumer<int[][], int[][]> {
+public class InvertAlphaFilter extends Filter {
 
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				target[x][y] = (pixel & 0x00FFFFFFFF) | (255 - ColorUtils.getAlpha(pixel));
+				int srcPixel = source[x][y];
+				target[x][y] = SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height) ? (srcPixel & 0x00FFFFFFFF) | (255 - ColorUtils.getAlpha(srcPixel)) : srcPixel;
 			}
 		}
 	}

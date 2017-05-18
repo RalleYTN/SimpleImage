@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Grayscale filter that sets the RGB channels of a pixel to their average.
@@ -32,26 +32,35 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class AveragingGrayscaleFilter implements BiConsumer<int[][], int[][]> {
+public class AveragingGrayscaleFilter extends Filter {
 
 	@Override
-	public void accept(int[][] source, int[][] target) {
-		
+	public void apply(int[][] source, int[][] target) {
+
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int alpha = ColorUtils.getAlpha(pixel);
-				int red = ColorUtils.getRed(pixel);
-				int green = ColorUtils.getGreen(pixel);
-				int blue = ColorUtils.getBlue(pixel);
-				int gray = (red + green + blue) / 3;
+				int srcPixel = source[x][y];
 				
-				target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+					
+					int alpha = ColorUtils.getAlpha(srcPixel);
+					int red = ColorUtils.getRed(srcPixel);
+					int green = ColorUtils.getGreen(srcPixel);
+					int blue = ColorUtils.getBlue(srcPixel);
+					int gray = (red + green + blue) / 3;
+					
+					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
+				}
 			}
 		}
 	}

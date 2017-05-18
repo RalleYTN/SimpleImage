@@ -34,6 +34,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,12 +48,18 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
-import java.util.function.BiConsumer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.zip.ZipFile;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 /**
  * Represents an image. The image data is saved in a two dimensional integer array.
@@ -59,7 +68,7 @@ import javax.imageio.ImageIO;
  * equally fast. There also is no useless over head. Doing image processing is no problem for this class
  * as it already contains a good amount of pre written methods.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
- * @version 1.0.0
+ * @version 1.1.0
  * @since 1.0.0
  */
 public class SimpleImage {
@@ -77,11 +86,11 @@ public class SimpleImage {
 	public static final int AXIS_Y = 1;
 	
 	/**
-	 * Used for {@link #scale(int, int, BiConsumer)}, {@link #scaleByFactor(float, BiConsumer)} and {@link #scaleToFit(int, int, BiConsumer)}.
+	 * Used for {@link #scale(int, int, ScaleAlgorithm)}, {@link #scaleByFactor(float, ScaleAlgorithm)} and {@link #scaleToFit(int, int, ScaleAlgorithm)}.
 	 * A simple and really fast scaling algorithm that produces images with low quality. Recommended for pixel arts or thumbnails.
 	 * @since 1.0.0
 	 */
-	public static final BiConsumer<int[][], int[][]> SCALE_NEAREST_NEIGHBOUR = (source, target) -> {
+	public static final ScaleAlgorithm SCALE_NEAREST_NEIGHBOUR = (source, target) -> {
 		
 		int srcWidth = source.length;
 		int srcHeight = source[0].length;
@@ -101,11 +110,11 @@ public class SimpleImage {
 	};
 	
 	/**
-	 * Used for {@link #scale(int, int, BiConsumer)}, {@link #scaleByFactor(float, BiConsumer)} and {@link #scaleToFit(int, int, BiConsumer)}.
+	 * Used for {@link #scale(int, int, ScaleAlgorithm)}, {@link #scaleByFactor(float, ScaleAlgorithm)} and {@link #scaleToFit(int, int, ScaleAlgorithm)}.
 	 * A bit more complex than {@link #SCALE_NEAREST_NEIGHBOUR} causing it to be slower, but the quality of resulting images is better.
 	 * @since 1.0.0
 	 */
-	public static final BiConsumer<int[][], int[][]> SCALE_BILINEAR_INTERPOLATION = (source, target) -> {
+	public static final ScaleAlgorithm SCALE_BILINEAR_INTERPOLATION = (source, target) -> {
 		
 		int srcWidth = source.length;
 		int srcHeight = source[0].length;
@@ -141,8 +150,84 @@ public class SimpleImage {
 			}
 		}
 	};
+	
+	/**
+	 * Used for {@link #rotate(double, RotationAlgorithm)}, {@link #rotate(double, Dimension, RotationAlgorithm)}, {@link #rotate(double, int, int, int, int, RotationAlgorithm)} and {@link #rotate(double, Dimension, Point, RotationAlgorithm)}.
+	 * Not as fast as {@link #ROTATE_NEAREST_NEIGHBOUR} but it produces better results.
+	 * @since 1.1.0
+	 */
+	public static final RotationAlgorithm ROTATE_BILINEAR_INTERPOLATION = (source, target, degrees, rotationCenterX, rotationCenterY) -> {
+		
+		int srcWidth = source.length;
+		int srcHeight = source[0].length;
+		double radians = Math.toRadians(degrees);
+		int targetWidth = target.length;
+		int targetHeight = target[0].length;
+		
+		for(int targetX = 0; targetX < targetWidth; targetX++) {
+			
+			for(int targetY = 0; targetY < targetHeight; targetY++) {
+				
+				double srcY = rotationCenterX - ((rotationCenterY - targetY) * Math.cos(radians)) + ((rotationCenterY - targetX) * Math.sin(radians));
+				double srcX = rotationCenterY - ((rotationCenterY - targetY) * Math.sin(radians)) - ((rotationCenterX - targetX) * Math.cos(radians));
+
+				int x1 = (int)srcX;
+				int y1 = (int)srcY;
+				
+				if(SimpleImage.__inBounds(x1, y1, 0, 0, srcWidth, srcHeight)) {
+					
+					int x2 = (int)srcX + 1;
+					int y2 = (int)srcY + 1;
+					
+					float diffX = (float)(srcX - (int)srcX);
+					float diffY = (float)(srcY - (int)srcY);
+					
+					int pixelA = source[x1][y1];
+					int pixelB = SimpleImage.__inBounds(x2, y1, 0, 0, srcWidth, srcHeight) ? source[x2][y1] : pixelA;
+					int pixelC = SimpleImage.__inBounds(x1, y2, 0, 0, srcWidth, srcHeight) ? source[x1][y2] : pixelA;
+					int pixelD = SimpleImage.__inBounds(x2, y2, 0, 0, srcWidth, srcHeight) ? source[x2][y2] : pixelA;
+					
+					int alpha = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 24);
+					int red = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 16);
+					int green = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 8);
+					int blue = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 0);
+					
+					target[targetX][targetY] = ColorUtils.getARGB(red, green, blue, alpha);
+				}
+			}
+		}
+	};
+	
+	/**
+	 * Used for {@link #rotate(double, RotationAlgorithm)}, {@link #rotate(double, Dimension, RotationAlgorithm)}, {@link #rotate(double, int, int, int, int, RotationAlgorithm)} and {@link #rotate(double, Dimension, Point, RotationAlgorithm)}.
+	 * Fast rotation algorithm.
+	 * @since 1.1.0
+	 */
+	public static final RotationAlgorithm ROTATE_NEAREST_NEIGHBOUR = (source, target, degrees, rotationCenterX, rotationCenterY) -> {
+		
+		int srcWidth = source.length;
+		int srcHeight = source[0].length;
+		double radians = Math.toRadians(degrees);
+		int targetWidth = target.length;
+		int targetHeight = target[0].length;
+		
+		for(int targetX = 0; targetX < targetWidth; targetX++) {
+			
+			for(int targetY = 0; targetY < targetHeight; targetY++) {
+				
+				int srcY = (int)(rotationCenterX - ((rotationCenterY - targetY) * Math.cos(radians)) + ((rotationCenterY - targetX) * Math.sin(radians)));
+				int srcX = (int)(rotationCenterY - ((rotationCenterY - targetY) * Math.sin(radians)) - ((rotationCenterX - targetX) * Math.cos(radians)));
+
+				if(SimpleImage.__inBounds(srcX, srcY, 0, 0, srcWidth, srcHeight)) {
+
+					target[targetX][targetY] = source[srcX][srcY];
+				}
+			}
+		}
+	};
 
 	private int[][] data;
+	final Map<String, Atlas> atlases = new HashMap<>();
 	
 	/**
 	 * Takes a screenshot and initializes the instance with it's data.
@@ -473,7 +558,25 @@ public class SimpleImage {
 	 */
 	public SimpleImage rotate(double degrees) {
 		
-		return this.rotate(degrees, this.data.length, this.data[0].length, this.data.length / 2, this.data[0].length / 2);
+		int rotationCenterX = this.data.length / 2;
+		int rotationCenterY = this.data[0].length / 2;
+		
+		return this.rotate(degrees, this.data.length, this.data[0].length, rotationCenterX, rotationCenterY, SimpleImage.ROTATE_NEAREST_NEIGHBOUR);
+	}
+	
+	/**
+	 * Rotates the image.
+	 * @param degrees degrees by which the image should rotate
+	 * @param algorithm algorithm with which the image should rotate
+	 * @return the rotated image
+	 * @since 1.1.0
+	 */
+	public SimpleImage rotate(double degrees, RotationAlgorithm algorithm) {
+		
+		int rotationCenterX = this.data.length / 2;
+		int rotationCenterY = this.data[0].length / 2;
+		
+		return this.rotate(degrees, this.data.length, this.data[0].length, rotationCenterX, rotationCenterY, algorithm);
 	}
 	
 	/**
@@ -481,12 +584,35 @@ public class SimpleImage {
 	 * @param degrees degrees by which the image should rotate
 	 * @param size size of the resulting image
 	 * @return the rotated image
+	 * @throws IllegalArgumentException If the size is smaller than 1x1
 	 * @since 1.0.0
 	 */
-	public SimpleImage rotate(double degrees, Dimension size) {
+	public SimpleImage rotate(double degrees, Dimension size) throws IllegalArgumentException {
 		
-		return this.rotate(degrees, size.width, size.height, size.width / 2, size.height / 2);
+		int rotationCenterX = this.data.length / 2;
+		int rotationCenterY = this.data[0].length / 2;
+		
+		return this.rotate(degrees, size.width, size.height, rotationCenterX, rotationCenterY, SimpleImage.ROTATE_NEAREST_NEIGHBOUR);
 	}
+	
+	/**
+	 * Rotates the image.
+	 * @param degrees degrees by which the image should rotate
+	 * @param size size of the resulting image
+	 * @param algorithm algorithm with which the image should rotate
+	 * @return the rotated image
+	 * @throws IllegalArgumentException If the size is smaller than 1x1
+	 * @since 1.1.0
+	 */
+	public SimpleImage rotate(double degrees, Dimension size, RotationAlgorithm algorithm) throws IllegalArgumentException {
+		
+		int rotationCenterX = this.data.length / 2;
+		int rotationCenterY = this.data[0].length / 2;
+		
+		return this.rotate(degrees, size.width, size.height, rotationCenterX, rotationCenterY, algorithm);
+	}
+	
+	
 	
 	/**
 	 * Rotates the image.
@@ -497,7 +623,26 @@ public class SimpleImage {
 	 */
 	public SimpleImage rotate(double degrees, Point rotationCenter) {
 		
-		return this.rotate(degrees, this.data.length, this.data[0].length, rotationCenter.x, rotationCenter.y);
+		int imgWidth = this.data.length;
+		int imgHeight = this.data[0].length;
+		
+		return this.rotate(degrees, imgWidth, imgHeight, rotationCenter.x, rotationCenter.y, SimpleImage.ROTATE_NEAREST_NEIGHBOUR);
+	}
+	
+	/**
+	 * Rotates the image.
+	 * @param degrees degrees by which the image should rotate
+	 * @param rotationCenter center of rotation
+	 * @param algorithm algorithm with which the image should rotate
+	 * @return the rotated image
+	 * @since 1.1.0
+	 */
+	public SimpleImage rotate(double degrees, Point rotationCenter, RotationAlgorithm algorithm) {
+		
+		int imgWidth = this.data.length;
+		int imgHeight = this.data[0].length;
+		
+		return this.rotate(degrees, imgWidth, imgHeight, rotationCenter.x, rotationCenter.y, algorithm);
 	}
 	
 	/**
@@ -506,11 +651,27 @@ public class SimpleImage {
 	 * @param size size of the resulting image
 	 * @param rotationCenter center of rotation
 	 * @return the rotated image
+	 * @throws IllegalArgumentException If the size is smaller than 1x1
 	 * @since 1.0.0
 	 */
-	public SimpleImage rotate(double degrees, Dimension size, Point rotationCenter) {
+	public SimpleImage rotate(double degrees, Dimension size, Point rotationCenter) throws IllegalArgumentException {
 		
-		return this.rotate(degrees, size.width, size.height, rotationCenter.x, rotationCenter.y);
+		return this.rotate(degrees, size.width, size.height, rotationCenter.x, rotationCenter.y, SimpleImage.ROTATE_NEAREST_NEIGHBOUR);
+	}
+	
+	/**
+	 * Rotates the image.
+	 * @param degrees degrees by which the image should rotate
+	 * @param size size of the resulting image
+	 * @param rotationCenter center of rotation
+	 * @param algorithm algorithm with which the image should rotate
+	 * @throws IllegalArgumentException If the size is 1x1
+	 * @return the rotated image
+	 * @since 1.1.0
+	 */
+	public SimpleImage rotate(double degrees, Dimension size, Point rotationCenter, RotationAlgorithm algorithm) throws IllegalArgumentException {
+		
+		return this.rotate(degrees, size.width, size.height, rotationCenter.x, rotationCenter.y, algorithm);
 	}
 	
 	/**
@@ -520,29 +681,57 @@ public class SimpleImage {
 	 * @param height height of the resulting image
 	 * @param rotationCenterX X position of the rotation center
 	 * @param rotationCenterY Y position of the rotation center
+	 * @throws IllegalArgumentException If the size is smaller than 1x1
 	 * @return the rotated image
 	 * @since 1.0.0
 	 */
-    public SimpleImage rotate(double degrees, int width, int height, int rotationCenterX, int rotationCenterY) {
+    public SimpleImage rotate(double degrees, int width, int height, int rotationCenterX, int rotationCenterY) throws IllegalArgumentException {
         
-		int imgWidth = this.data.length;
-		int imgHeight = this.data[0].length;
-		double radians = -Math.toRadians(degrees + 180);
-		int[][] target = new int[width][height];
-		
-		for(int x = 0; x < width; x++) {
+		return this.rotate(degrees, width, height, rotationCenterX, rotationCenterY, SimpleImage.ROTATE_NEAREST_NEIGHBOUR);
+    }
+    
+    /**
+     * Rotates the image.
+     * @param degrees degrees by which the image should rotate
+     * @param width width of the resulting image
+     * @param height height of the resulting image
+     * @param rotationCenterX X position of the rotation center
+     * @param rotationCenterY Y position of the rotation center
+     * @param algorithm algorithm with which the image should rotate
+     * @throws IllegalArgumentException If the size is smaller than 1x1
+     * @return the rotated image
+     * @since 1.1.0
+     */
+    public SimpleImage rotate(double degrees, int width, int height, int rotationCenterX, int rotationCenterY, RotationAlgorithm algorithm) throws IllegalArgumentException {
+    	
+		if(width < 1 || height < 1) {
 			
-			for(int y = 0; y < height; y++) {
-				
-				int sourceX = (int)(rotationCenterX - ((rotationCenterY - y) * Math.cos(radians)) + ((rotationCenterX - x) * Math.sin(radians)));
-				int sourceY = (int)(rotationCenterY - ((rotationCenterY - y) * Math.sin(radians)) - ((rotationCenterX - x) * Math.cos(radians)));
-
-				if(SimpleImage.__inBounds(sourceX, sourceY, 0, 0, imgWidth, imgHeight)) {
-
-					target[x][y] = this.data[sourceX][sourceY];
-				}
-			}
+			throw new IllegalArgumentException("An image must be at least 1x1px of size!");
 		}
+    	
+    	int[][] target = new int[width][height];
+    	algorithm.calc(this.data, target, degrees, rotationCenterX, rotationCenterY);
+    	
+    	return new SimpleImage(target);
+    }
+    
+    /**
+     * Applies a filter to the image.
+     * @param filter filter to use
+     * @param x X position on which the filter starts
+     * @param y Y position on which the filter starts
+     * @param width width of the area the filter should work in
+     * @param height height of the area the filter should work in
+     * @return the filtered image
+     * @since 1.1.0
+     */
+    public SimpleImage filter(Filter filter, int x, int y, int width, int height) {
+    	
+    	int imgWidth = this.data.length;
+		int imgHeight = this.data[0].length;
+		int[][] target = new int[imgWidth][imgHeight];
+		filter.setBounds(new Rectangle(x, y, width, height));
+		filter.apply(this.data, target);
 		
 		return new SimpleImage(target);
     }
@@ -553,13 +742,12 @@ public class SimpleImage {
 	 * @return the filtered image
 	 * @since 1.0.0
 	 */
-	public SimpleImage filter(BiConsumer<int[][], int[][]> filter) {
+	public SimpleImage filter(Filter filter) {
 		
 		int imgWidth = this.data.length;
 		int imgHeight = this.data[0].length;
-		int[][] target = new int[imgWidth][imgHeight];
-		filter.accept(this.data, target);
-		return new SimpleImage(target);
+		
+		return this.filter(filter, 0, 0, imgWidth, imgHeight);
 	}
 	
 	/**
@@ -580,12 +768,24 @@ public class SimpleImage {
 	 * @return the scaled image
 	 * @since 1.0.0
 	 */
-	public SimpleImage scaleByFactor(float factor, BiConsumer<int[][], int[][]> algorithm) {
+	public SimpleImage scaleByFactor(float factor, ScaleAlgorithm algorithm) {
 		
 		int imgWidth = this.data.length;
 		int imgHeight = this.data[0].length;
+		int scaledWidth = (int)(imgWidth * factor);
+		int scaledHeight = (int)(imgHeight * factor);
 		
-		return this.scale((int)(imgWidth * factor), (int)(imgHeight * factor), algorithm);
+		if(scaledWidth < 1) {
+			
+			scaledWidth = 1;
+		}
+		
+		if(scaledHeight < 1) {
+			
+			scaledHeight = 1;
+		}
+		
+		return this.scale(scaledWidth, scaledHeight, algorithm);
 	}
 	
 	/**
@@ -593,9 +793,10 @@ public class SimpleImage {
 	 * @param width maximum width of the resulting image
 	 * @param height maximum height of the resulting image
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scaleToFit(int width, int height) {
+	public SimpleImage scaleToFit(int width, int height) throws IllegalArgumentException {
 		
 		return this.scaleToFit(width, height, SimpleImage.SCALE_NEAREST_NEIGHBOUR);
 	}
@@ -604,9 +805,10 @@ public class SimpleImage {
 	 * Scales the image proportional to fit the given size.
 	 * @param size maximum size of the resulting image
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scaleToFit(Dimension size) {
+	public SimpleImage scaleToFit(Dimension size) throws IllegalArgumentException {
 		
 		return this.scaleToFit(size.width, size.height, SimpleImage.SCALE_NEAREST_NEIGHBOUR);
 	}
@@ -616,9 +818,10 @@ public class SimpleImage {
 	 * @param size maximum size of the resulting image
 	 * @param algorithm algorithm to scale the image with
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scaleToFit(Dimension size, BiConsumer<int[][], int[][]> algorithm) {
+	public SimpleImage scaleToFit(Dimension size, ScaleAlgorithm algorithm) throws IllegalArgumentException {
 		
 		return this.scaleToFit(size.width, size.height, algorithm);
 	}
@@ -629,9 +832,10 @@ public class SimpleImage {
 	 * @param height maximum height of the resulting image
 	 * @param algorithm algorithm to scale the image with
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scaleToFit(int width, int height, BiConsumer<int[][], int[][]> algorithm) {
+	public SimpleImage scaleToFit(int width, int height, ScaleAlgorithm algorithm) throws IllegalArgumentException {
 		
 		int imgWidth = this.data.length;
 		int imgHeight = this.data[0].length;
@@ -658,9 +862,10 @@ public class SimpleImage {
 	 * @param width width of the resulting image
 	 * @param height height of the resulting image
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scale(int width, int height) {
+	public SimpleImage scale(int width, int height) throws IllegalArgumentException {
 		
 		return this.scale(width, height, SimpleImage.SCALE_NEAREST_NEIGHBOUR);
 	}
@@ -669,9 +874,10 @@ public class SimpleImage {
 	 * Scales the image to the given size.
 	 * @param size size of the resulting image
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scale(Dimension size) {
+	public SimpleImage scale(Dimension size) throws IllegalArgumentException {
 		
 		return this.scale(size.width, size.height, SimpleImage.SCALE_NEAREST_NEIGHBOUR);
 	}
@@ -681,9 +887,10 @@ public class SimpleImage {
 	 * @param size size of the resulting image
 	 * @param algorithm algorithm to scale the image with
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scale(Dimension size, BiConsumer<int[][], int[][]> algorithm) {
+	public SimpleImage scale(Dimension size, ScaleAlgorithm algorithm) throws IllegalArgumentException {
 		
 		return this.scale(size.width, size.height, algorithm);
 	}
@@ -694,74 +901,90 @@ public class SimpleImage {
 	 * @param height height of the resulting image
 	 * @param algorithm algorithm to scale the image with
 	 * @return the scaled image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage scale(int width, int height, BiConsumer<int[][], int[][]> algorithm) {
+	public SimpleImage scale(int width, int height, ScaleAlgorithm algorithm) throws IllegalArgumentException {
+		
+		if(width < 1 || height < 1) {
+			
+			throw new IllegalArgumentException("An image must be at least 1x1px of size!");
+		}
 		
 		int[][] target = new int[width][height];
-		algorithm.accept(this.data, target);
+		algorithm.calc(this.data, target);
 		return new SimpleImage(target);
 	}
 	
 	/**
-	 * Crops out a part of the image and deletes it in the source image.
+	 * Cuts out a part of the image and deletes it in the source image.
 	 * @param position position of the part which should be cut out
 	 * @param width width of the part which should be cut out
 	 * @param height height of the part which should be cut out
 	 * @return the cut out image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage cut(Point position, int width, int height) {
+	public SimpleImage cut(Point position, int width, int height) throws IllegalArgumentException {
 		
 		return this.cut(position.x, position.y, width, height);
 	}
 	
 	/**
-	 * Crops out a part of the image and deletes it in the source image.
+	 * Cuts out a part of the image and deletes it in the source image.
 	 * @param x X position of the part which should be cut out
 	 * @param y Y position of the part which should be cut out
 	 * @param size size of the part which should be cut out
 	 * @return the cut out image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage cut(int x, int y, Dimension size) {
+	public SimpleImage cut(int x, int y, Dimension size) throws IllegalArgumentException {
 		
 		return this.cut(x, y, size.width, size.height);
 	}
 	
 	/**
-	 * Crops out a part of the image and deletes it in the source image.
+	 * Cuts out a part of the image and deletes it in the source image.
 	 * @param position position of the part which should be cut out
 	 * @param size size of the part which should be cut out
 	 * @return the cut out image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage cut(Point position, Dimension size) {
+	public SimpleImage cut(Point position, Dimension size) throws IllegalArgumentException {
 		
 		return this.cut(position.x, position.y, size.width, size.height);
 	}
 	
 	/**
-	 * Crops out a part of the image and deletes it in the source image.
-	 * @param rect bounds of the part which should be cut out
+	 * Cuts out a part of the image and deletes it in the source image.
+	 * @param bounds bounds of the part which should be cut out
 	 * @return the cut out image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage cut(Rectangle rect) {
+	public SimpleImage cut(Rectangle bounds) throws IllegalArgumentException {
 		
-		return this.cut(rect.x, rect.y, rect.width, rect.height);
+		return this.cut(bounds.x, bounds.y, bounds.width, bounds.height);
 	}
 	
 	/**
-	 * Crops out a part of the image and deletes it in the source image.
+	 * Cuts out a part of the image and deletes it in the source image.
 	 * @param x X position of the part which should be cut out
 	 * @param y Y position of the part which should be cut out
 	 * @param width width of the part which should be cut out
 	 * @param height height of the part which should be cut out
 	 * @return the cut out image
+	 * @throws IllegalArgumentException If width or height is smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage cut(int x, int y, int width, int height) {
+	public SimpleImage cut(int x, int y, int width, int height) throws IllegalArgumentException {
+		
+		if(width < 1 || height < 1) {
+			
+			throw new IllegalArgumentException("An image must be at least 1x1px of size!");
+		}
 		
 		int[][] target = new int[width][height];
 		int targetX = 0;
@@ -785,6 +1008,55 @@ public class SimpleImage {
 		}
 		
 		return new SimpleImage(target);
+	}
+	
+	/**
+	 * Removes the pixels inside the given box.
+	 * @param bounds bounds in which all pixels should be deleted
+	 * @return the resulting image
+	 * @since 1.1.0
+	 */
+	public SimpleImage delete(Rectangle bounds) {
+		
+		return this.delete(bounds.x, bounds.y, bounds.width, bounds.height);
+	}
+	
+	/**
+	 * Removes the pixels inside the given box.
+	 * @param position position of the part which should be deleted
+	 * @param size size of the part which should be deleted
+	 * @return the resulting image
+	 * @since 1.1.0
+	 */
+	public SimpleImage delete(Point position, Dimension size) {
+		
+		return this.delete(position.x, position.y, size.width, size.height);
+	}
+	
+	/**
+	 * Removes the pixels inside the given box.
+	 * @param position position of the part which should be deleted
+	 * @param width width of the part which should be deleted
+	 * @param height height of the part which should be deleted
+	 * @return the resulting image
+	 * @since 1.1.0
+	 */
+	public SimpleImage delete(Point position, int width, int height) {
+		
+		return this.delete(position.x, position.y, width, height);
+	}
+	
+	/**
+	 * Removes the pixels inside the given box.
+	 * @param x X position of the part which should be deleted
+	 * @param y Y position of the part which should be deleted
+	 * @param size size of the part which should be deleted
+	 * @return the resulting image
+	 * @since 1.1.0
+	 */
+	public SimpleImage delete(int x, int y, Dimension size) {
+		
+		return this.delete(x, y, size.width, size.height);
 	}
 	
 	/**
@@ -817,6 +1089,59 @@ public class SimpleImage {
 		
 		return new SimpleImage(target);
 	}
+	
+	/**
+	 * Crops out the given box from the image.
+	 * @param bounds bounds of the part which should be cropped
+	 * @return the cropped image
+	 * @throws IllegalArgumentException If width or height of the new image are smaller than 1
+	 * @since 1.1.0
+	 */
+	public SimpleImage crop(Rectangle bounds) throws IllegalArgumentException {
+		
+		return this.crop(bounds.x, bounds.y, bounds.width, bounds.height);
+	}
+	
+	/**
+	 * Crops out the given box from the image.
+	 * @param position position of the part which should be cropped
+	 * @param size size of the part which should be cropped
+	 * @return the cropped image
+	 * @throws IllegalArgumentException If width or height of the new image are smaller than 1
+	 * @since 1.1.0
+	 */
+	public SimpleImage crop(Point position, Dimension size) throws IllegalArgumentException {
+		
+		return this.crop(position.x, position.y, size.width, size.height);
+	}
+	
+	/**
+	 * Crops out the given box from the image.
+	 * @param x X position of the part which should be cropped
+	 * @param y Y position of the part which should be cropped
+	 * @param size size of the part which should be cropped
+	 * @return the cropped image
+	 * @throws IllegalArgumentException If width or height of the new image are smaller than 1
+	 * @since 1.1.0
+	 */
+	public SimpleImage crop(int x, int y, Dimension size) throws IllegalArgumentException {
+		
+		return this.crop(x, y, size.width, size.height);
+	}
+	
+	/**
+	 * Crops out the given box from the image.
+	 * @param position position of the part which should be cropped
+	 * @param width width of the part which should be cropped
+	 * @param height height of the part which should be cropped
+	 * @return the cropped image
+	 * @throws IllegalArgumentException If width or height of the new image are smaller than 1
+	 * @since 1.1.0
+	 */
+	public SimpleImage crop(Point position, int width, int height) throws IllegalArgumentException {
+		
+		return this.crop(position.x, position.y, width, height);
+	}
 
 	/**
 	 * Crops out the given box from the image.
@@ -825,9 +1150,15 @@ public class SimpleImage {
 	 * @param width width of the part which should be cropped
 	 * @param height height of the part which should be cropped
 	 * @return the cropped image
+	 * @throws IllegalArgumentException If width or height of the new image are smaller than 1
 	 * @since 1.0.0
 	 */
-	public SimpleImage crop(int x, int y, int width, int height) {
+	public SimpleImage crop(int x, int y, int width, int height) throws IllegalArgumentException {
+		
+		if(width < 1 || height < 1) {
+			
+			throw new IllegalArgumentException("An image must be at least 1x1px of size!");
+		}
 		
 		int[][] target = new int[width][height];
 		int targetX = 0;
@@ -853,6 +1184,7 @@ public class SimpleImage {
 	}
 
 	/**
+	 * Copies the image data into a new image. Atlases and other meta data will not be copied over.
 	 * @return a copy of the image
 	 * @since 1.0.0
 	 */
@@ -903,6 +1235,27 @@ public class SimpleImage {
 	}
 	
 	/**
+	 * Wraps the image into a {@linkplain TransferableImage}.
+	 * @return the {@linkplain TransferableImage} instance
+	 * @since 1.1.0
+	 */
+	public TransferableImage toTransferableImage() {
+		
+		return this.toTransferableImage(BufferedImage.TYPE_INT_ARGB);
+	}
+	
+	/**
+	 * Wraps the image into a {@linkplain TransferableImage}.
+	 * @param type color model of the resulting image
+	 * @return the {@linkplain TransferableImage} instance
+	 * @since 1.1.0
+	 */
+	public TransferableImage toTransferableImage(int type) {
+		
+		return new TransferableImage(this.toBufferedImage(type));
+	}
+	
+	/**
 	 * Converts the image into an instance of {@linkplain BufferedImage}.
 	 * @return an instance of {@linkplain BufferedImage}
 	 * @since 1.0.0
@@ -924,16 +1277,14 @@ public class SimpleImage {
 		// In order to preserve the hardware acceleration the image will be drawn onto the resulting image with the Graphics class.
 		// Another reason is that I don't have to worry about color models.
 		
-		int width = this.data.length;
-		int height = this.data[0].length;
-		BufferedImage image = new BufferedImage(width, height, type);
+		int imgWidth = this.data.length;
+		int imgHeight = this.data[0].length;
+		BufferedImage image = new BufferedImage(imgWidth, imgHeight, type);
 		Graphics graphics = image.createGraphics();
-		int x;
-		int y;
 		
-		for(x = 0; x < width; x++) {
+		for(int x = 0; x < imgWidth; x++) {
 			
-			for(y = 0; y < height; y++) {
+			for(int y = 0; y < imgHeight; y++) {
 
 				graphics.setColor(new Color(this.data[x][y], true));
 				graphics.fillRect(x, y, 1, 1);
@@ -1047,6 +1398,108 @@ public class SimpleImage {
 	public int[][] getData() {
 		
 		return this.data;
+	}
+	
+	/**
+	 * Puts this image onto the clipboard.
+	 * @since 1.1.0
+	 */
+	public void putOnClipboard() {
+		
+		this.putOnClipboard(BufferedImage.TYPE_INT_ARGB);
+	}
+	
+	/**
+	 * Puts this image onto the clipboard.
+	 * @param type color model of the resulting image
+	 * @since 1.1.0
+	 */
+	public void putOnClipboard(int type) {
+		
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(this.toTransferableImage(type), (clipboard, data) -> {});
+	}
+	
+	/**
+	 * Creates a new atlas.
+	 * @param name name of the atlas
+	 * @return the created atlas
+	 * @throws IllegalArgumentException If an atlas with the given name already exists
+	 * @since 1.1.0
+	 */
+	public Atlas createAtlas(String name) throws IllegalArgumentException {
+		
+		if(this.atlases.containsKey(name)) {
+			
+			throw new IllegalArgumentException("There already is an atlas with the name '" + name + "'!");
+		}
+		
+		Atlas atlas = new Atlas(name, this);
+		this.atlases.put(name, atlas);
+		return atlas;
+	}
+	
+	/**
+	 * @param name name of the atlas
+	 * @return the atlas with the given name
+	 * @since 1.1.0
+	 */
+	public Atlas getAtlas(String name) {
+		
+		return this.atlases.get(name);
+	}
+	
+	/**
+	 * @return a list of all atlases for this image
+	 * @since 1.1.0
+	 */
+	public List<Atlas> getAtlases() {
+		
+		List<Atlas> atlases = new ArrayList<>();
+		this.atlases.forEach((name, atlas) -> atlases.add(atlas));
+		return atlases;
+	}
+	
+	/**
+	 * @return the number of atlases this image has
+	 * @since 1.1.0
+	 */
+	public int getNumberOfAtlases() {
+		
+		return this.atlases.size();
+	}
+	
+	/**
+	 * @return the image from the clipboard or {@code null} if there is no readable image on the clipboard.
+	 * @throws UnsupportedFlavorException if the requested data flavor is not supported
+	 * @throws IOException if the data is no longer available in the requested flavor
+	 * @since 1.1.0
+	 */
+	public static final SimpleImage getClipboardImage() throws UnsupportedFlavorException, IOException {
+		
+		Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+		SimpleImage image = null;
+		
+		if(contents != null && contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+			
+			image = new SimpleImage((Image)contents.getTransferData(DataFlavor.imageFlavor));
+		}
+		
+		return image;
+	}
+	
+	/**
+	 * Creates a {@linkplain JFrame} showing this image.
+	 * This method exists for debugging purposes.
+	 * @since 1.1.0
+	 */
+	public void show() {
+		
+		JFrame frame = new JFrame();
+		frame.add(new JLabel(new ImageIcon(this.toBufferedImage())));
+		frame.pack();
+		frame.setLocationRelativeTo(null);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setVisible(true);
 	}
 	
 	private static final int[][] __read(Image image) {

@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Filter that applies a convolution matrix on an image.
@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class ConvolutionFilter implements BiConsumer<int[][], int[][]> {
+public class ConvolutionFilter extends Filter {
 
 	/**
 	 * Interprets pixels outside the image as pixels with the color {@code 0x00000000}.
@@ -87,45 +87,54 @@ public class ConvolutionFilter implements BiConsumer<int[][], int[][]> {
 	}
 	
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
 		int kernelWidth = this.kernel.length;
 		int kernelHeight = this.kernel[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
 				int srcPixel = source[x][y];
-				int[][] matrix = ConvolutionFilter.__getMatrix(x, y, kernelWidth, kernelHeight, source, this.edgeCondition);
 				
-				if(matrix != null) {
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
-					float redFloat = 0.0F;
-					float greenFloat = 0.0F;
-					float blueFloat = 0.0F;
+					int[][] matrix = ConvolutionFilter.__getMatrix(x, y, kernelWidth, kernelHeight, source, this.edgeCondition);
 					
-					for(int matrixX = 0; matrixX < matrix.length; matrixX++) {
+					if(matrix != null) {
 						
-						for(int matrixY = 0; matrixY < matrix.length; matrixY++) {
-
-							float factor = this.kernel[matrixX][matrixY];
-							int pixel = matrix[matrixX][matrixY];
+						float redFloat = 0.0F;
+						float greenFloat = 0.0F;
+						float blueFloat = 0.0F;
+						
+						for(int matrixX = 0; matrixX < matrix.length; matrixX++) {
 							
-							redFloat += ColorUtils.getRed(pixel) * factor;
-							greenFloat += ColorUtils.getGreen(pixel) * factor;
-							blueFloat += ColorUtils.getBlue(pixel) * factor;
-						}
-					}
-					
-					int red = ColorUtils.truncate((int)redFloat);
-					int green = ColorUtils.truncate((int)greenFloat);
-					int blue = ColorUtils.truncate((int)blueFloat);
-					int alpha = ColorUtils.getAlpha(srcPixel);
+							for(int matrixY = 0; matrixY < matrix.length; matrixY++) {
 
-					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+								float factor = this.kernel[matrixX][matrixY];
+								int pixel = matrix[matrixX][matrixY];
+								
+								redFloat += ColorUtils.getRed(pixel) * factor;
+								greenFloat += ColorUtils.getGreen(pixel) * factor;
+								blueFloat += ColorUtils.getBlue(pixel) * factor;
+							}
+						}
+						
+						int red = ColorUtils.truncate((int)redFloat);
+						int green = ColorUtils.truncate((int)greenFloat);
+						int blue = ColorUtils.truncate((int)blueFloat);
+						int alpha = ColorUtils.getAlpha(srcPixel);
+
+						target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+						
+					} else {
+						
+						target[x][y] = srcPixel;
+					}
 					
 				} else {
 					

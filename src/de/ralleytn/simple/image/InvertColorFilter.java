@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Filter that inverts the red, green and blue channels of an image.
@@ -32,25 +32,34 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class InvertColorFilter implements BiConsumer<int[][], int[][]>{
+public class InvertColorFilter extends Filter {
 
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int alpha = ColorUtils.getAlpha(pixel);
-				int red = 255 - ColorUtils.getRed(pixel);
-				int green = 255 - ColorUtils.getGreen(pixel);
-				int blue = 255 - ColorUtils.getBlue(pixel);
+				int srcPixel = source[x][y];
 				
-				target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+					
+					int alpha = ColorUtils.getAlpha(srcPixel);
+					int red = 255 - ColorUtils.getRed(srcPixel);
+					int green = 255 - ColorUtils.getGreen(srcPixel);
+					int blue = 255 - ColorUtils.getBlue(srcPixel);
+					
+					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
+				}
 			}
 		}
 	}

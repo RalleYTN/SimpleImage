@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Filter that only uses black and white.
@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class MonochromeFilter implements BiConsumer<int[][], int[][]> {
+public class MonochromeFilter extends Filter {
 
 	private int threeshold;
 	private boolean invert;
@@ -74,23 +74,32 @@ public class MonochromeFilter implements BiConsumer<int[][], int[][]> {
 	}
 	
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int red = ColorUtils.getRed(pixel);
-				int green = ColorUtils.getGreen(pixel);
-				int blue = ColorUtils.getBlue(pixel);
-				int sum = red + green + blue;
-				int color = this.invert ? (sum < this.threeshold ? 0xFFFFFFFF : 0) : (sum > this.threeshold ? 0xFFFFFFFF : 0xFF000000);
+				int srcPixel = source[x][y];
 				
-				target[x][y] = ColorUtils.getARGB(color, color, color, 255);
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+					
+					int red = ColorUtils.getRed(srcPixel);
+					int green = ColorUtils.getGreen(srcPixel);
+					int blue = ColorUtils.getBlue(srcPixel);
+					int sum = red + green + blue;
+					int color = this.invert ? (sum < this.threeshold ? 0xFFFFFFFF : 0) : (sum > this.threeshold ? 0xFFFFFFFF : 0xFF000000);
+					
+					target[x][y] = ColorUtils.getARGB(color, color, color, 255);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
+				}
 			}
 		}
 	}

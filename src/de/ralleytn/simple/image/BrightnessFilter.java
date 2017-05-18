@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Filter that changes the brightness of an image.
@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class BrightnessFilter implements BiConsumer<int[][], int[][]> {
+public class BrightnessFilter extends Filter {
 
 	private int brightness;
 	
@@ -55,22 +55,31 @@ public class BrightnessFilter implements BiConsumer<int[][], int[][]> {
 	}
 	
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int alpha = ColorUtils.getAlpha(pixel);
-				int red = ColorUtils.truncate(ColorUtils.getRed(pixel) + this.brightness);
-				int green = ColorUtils.truncate(ColorUtils.getGreen(pixel) + this.brightness);
-				int blue = ColorUtils.truncate(ColorUtils.getBlue(pixel) + this.brightness);
+				int srcPixel = source[x][y];
 				
-				target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+					
+					int alpha = ColorUtils.getAlpha(srcPixel);
+					int red = ColorUtils.truncate(ColorUtils.getRed(srcPixel) + this.brightness);
+					int green = ColorUtils.truncate(ColorUtils.getGreen(srcPixel) + this.brightness);
+					int blue = ColorUtils.truncate(ColorUtils.getBlue(srcPixel) + this.brightness);
+					
+					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
+				}
 			}
 		}
 	}

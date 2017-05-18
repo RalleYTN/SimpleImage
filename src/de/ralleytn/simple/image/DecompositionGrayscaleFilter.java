@@ -24,7 +24,7 @@
 
 package de.ralleytn.simple.image;
 
-import java.util.function.BiConsumer;
+import java.awt.Rectangle;
 
 /**
  * Grayscale filter that uses the color channel with either highest or the lowest value as
@@ -33,7 +33,7 @@ import java.util.function.BiConsumer;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class DecompositionGrayscaleFilter implements BiConsumer<int[][], int[][]> {
+public class DecompositionGrayscaleFilter extends Filter {
 
 	/**
 	 * Use the color channel with the lowest value as new pixel color.
@@ -60,32 +60,41 @@ public class DecompositionGrayscaleFilter implements BiConsumer<int[][], int[][]
 	}
 	
 	@Override
-	public void accept(int[][] source, int[][] target) {
+	public void apply(int[][] source, int[][] target) {
 		
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
+		Rectangle bounds = this.getBounds();
 		
 		for(int x = 0; x < imgWidth; x++) {
 			
 			for(int y = 0; y < imgHeight; y++) {
 				
-				int pixel = source[x][y];
-				int alpha = ColorUtils.getAlpha(pixel);
-				int red = ColorUtils.getRed(pixel);
-				int green = ColorUtils.getGreen(pixel);
-				int blue = ColorUtils.getBlue(pixel);
-				int gray = 0x00000000;
+				int srcPixel = source[x][y];
 				
-				if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MAXIMUM) {
+				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
-					gray = ColorUtils.__max(red, green, blue);
+					int alpha = ColorUtils.getAlpha(srcPixel);
+					int red = ColorUtils.getRed(srcPixel);
+					int green = ColorUtils.getGreen(srcPixel);
+					int blue = ColorUtils.getBlue(srcPixel);
+					int gray = 0x00000000;
 					
-				} else if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MINIMUM) {
+					if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MAXIMUM) {
+						
+						gray = ColorUtils.__max(red, green, blue);
+						
+					} else if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MINIMUM) {
+						
+						gray = ColorUtils.__min(red, green, blue);
+					}
 					
-					gray = ColorUtils.__min(red, green, blue);
+					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+					
+				} else {
+					
+					target[x][y] = srcPixel;
 				}
-				
-				target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
 			}
 		}
 	}
