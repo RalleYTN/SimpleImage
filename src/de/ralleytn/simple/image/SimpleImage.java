@@ -68,7 +68,7 @@ import javax.swing.JLabel;
  * equally fast. There also is no useless over head. Doing image processing is no problem for this class
  * as it already contains a good amount of pre written methods.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
- * @version 1.1.0
+ * @version 1.1.1
  * @since 1.0.0
  */
 public class SimpleImage {
@@ -845,12 +845,12 @@ public class SimpleImage {
         
         if(scaledWidth > scaledHeight) {
             
-            scaledHeight = imgWidth / scaledWidth;
+            scaledHeight = imgHeight / scaledWidth;
             scaledWidth = width;
             
-        } else {
+        } else if(scaledHeight > scaledWidth) {
             
-            scaledWidth = imgHeight / scaledHeight;
+            scaledWidth = imgWidth / scaledHeight;
             scaledHeight = height;
         }
         

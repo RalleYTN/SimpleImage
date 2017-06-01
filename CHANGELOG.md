@@ -1,4 +1,8 @@
 # Changelog
+## Version 1.1.1
+- Fixed a bug with the method `SimpleImage.scaleToFit(int, int, ScaleAlgorithm)`.
+- Fixed a small error in the documentation.
+
 ## Version 1.1.0
 - Fixed a bug with the method `SimpleImage.rotate(double,Dimension)` that would calculate the wrong center of rotation.
 - Fixed a bug that mirrored an image when rotating.
