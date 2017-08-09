@@ -56,7 +56,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.zip.ZipFile;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -68,7 +72,7 @@ import javax.swing.JLabel;
  * equally fast. There also is no useless over head. Doing image processing is no problem for this class
  * as it already contains a good amount of pre written methods.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
- * @version 1.1.1
+ * @version 1.2.0
  * @since 1.0.0
  */
 public class SimpleImage {
@@ -473,6 +477,36 @@ public class SimpleImage {
 	public void write(OutputStream outputStream, String format, int type) throws IOException {
 		
 		ImageIO.write(this.toBufferedImage(type), format, outputStream);
+	}
+	
+	/**
+	 * 
+	 * @param outputStream
+	 * @param compressionQuality
+	 * @throws IOException
+	 * @since 1.2.0
+	 */
+	public void write(OutputStream outputStream, float compressionQuality) throws IOException {
+		
+		this.write(outputStream, BufferedImage.TYPE_INT_RGB, compressionQuality);
+	}
+	
+	/**
+	 * 
+	 * @param outputStream
+	 * @param type
+	 * @param compressionQuality
+	 * @throws IOException
+	 * @since 1.2.0
+	 */
+	public void write(OutputStream outputStream, int type, float compressionQuality) throws IOException {
+		
+		ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+		JPEGImageWriteParam param = new JPEGImageWriteParam(null);
+		param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		param.setCompressionQuality(compressionQuality);
+		writer.setOutput(outputStream);
+		writer.write(null, new IIOImage(this.toBufferedImage(type), null, null), param);
 	}
 	
 	/**
@@ -1474,14 +1508,35 @@ public class SimpleImage {
 	 * @throws IOException if the data is no longer available in the requested flavor
 	 * @since 1.1.0
 	 */
+	@SuppressWarnings("unchecked")
 	public static final SimpleImage getClipboardImage() throws UnsupportedFlavorException, IOException {
 		
 		Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 		SimpleImage image = null;
 		
-		if(contents != null && contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+		if(contents != null) {
 			
-			image = new SimpleImage((Image)contents.getTransferData(DataFlavor.imageFlavor));
+			if(contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+				
+				image = new SimpleImage((Image)contents.getTransferData(DataFlavor.imageFlavor));
+			
+			} else if(contents.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+				
+				for(File file : (List<File>)contents.getTransferData(DataFlavor.javaFileListFlavor)) {
+					
+					try {
+						
+						BufferedImage bimg = ImageIO.read(file);
+						
+						if(bimg != null) {
+							
+							image = new SimpleImage(bimg);
+							break;
+						}
+						
+					} catch(IOException exception) {}
+				}
+			}
 		}
 		
 		return image;
@@ -1500,6 +1555,61 @@ public class SimpleImage {
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 * @since 1.2.0
+	 */
+	public Color getColor(int x, int y) {
+		
+		return new Color(this.getPixel(x, y), true);
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @return
+	 * @since 1.2.0
+	 */
+	public Color getColor(Point position) {
+		
+		return this.getColor(position.x, position.y);
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @param graphics
+	 * @since 1.2.0
+	 */
+	public void paintToGraphics(Point position, Graphics graphics) {
+		
+		this.paintToGraphics(position.x, position.y, graphics);
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param graphics
+	 * @since 1.2.0
+	 */
+	public void paintToGraphics(int x, int y, Graphics graphics) {
+		
+		for(int _x = 0; _x < this.getWidth(); _x++) {
+			
+			for(int _y = 0; _y < this.getHeight(); _y++) {
+				
+				int xp = x + _x;
+				int yp = y + _y;
+				graphics.setColor(new Color(this.getPixel(_x, _y), true));
+				graphics.drawLine(xp, yp, xp, yp);
+			}
+		}
 	}
 	
 	private static final int[][] __read(Image image) {

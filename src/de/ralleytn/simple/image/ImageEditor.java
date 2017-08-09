@@ -24,6 +24,8 @@
 package de.ralleytn.simple.image;
 
 import java.awt.Color;
+import java.awt.Image;
+import java.awt.Point;
 
 /**
  * 
@@ -64,6 +66,173 @@ public class ImageEditor {
 	public void setColor(Color color) {
 		
 		this.color = color.getRGB();
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @since 1.2.0
+	 */
+	public void drawRect(int x, int y, int width, int height) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @since 1.2.0
+	 */
+	public void fillRect(int x, int y, int width, int height) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void drawSquare(int x, int y, int size) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void fillSquare(int x, int y, int size) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @since 1.2.0
+	 */
+	public void drawOval(int x, int y, int width, int height) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @since 1.2.0
+	 */
+	public void fillOval(int x, int y, int width, int height) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void drawCircle(int x, int y, int size) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void fillCircle(int x, int y, int size) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @since 1.2.0
+	 */
+	public void drawLine(int x1, int y1, int x2, int y2) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param points
+	 * @since 1.2.0
+	 */
+	public void drawLine(Point[] points) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param points
+	 * @since 1.2.0
+	 */
+	public void drawPolygon(Point[] points) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param points
+	 * @since 1.2.0
+	 */
+	public void fillPolygon(Point[] points) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param string
+	 * @param x
+	 * @param y
+	 * @since 1.2.0
+	 */
+	public void drawString(String string, int x, int y) {
+		
+		
+	}
+	
+	/**
+	 * 
+	 * @param image
+	 * @param x
+	 * @param y
+	 * @since 1.2.0
+	 */
+	public void drawImage(Image image, int x, int y) {
+		
+		
 	}
 	
 	/**
