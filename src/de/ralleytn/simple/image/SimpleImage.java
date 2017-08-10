@@ -423,7 +423,7 @@ public class SimpleImage {
 			SimpleImage image = new SimpleImage(300, 300);
 			ImageEditor editor = new ImageEditor(image);
 			editor.setColor(Color.BLACK);
-			editor.drawRect(100, 100, 100, 100, 5);
+			editor.drawLine(200, 100, 100, 100);
 			image.show();
 	}
 	

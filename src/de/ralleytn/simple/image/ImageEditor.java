@@ -334,7 +334,48 @@ public class ImageEditor {
 	 */
 	public void drawLine(int x1, int y1, int x2, int y2) {
 		
-		
+		if(x1 == x2) {
+			
+			int yStart = y2;
+			int yEnd = y2;
+			
+			if(y1 < yStart) {
+				
+				yStart = y1;
+				
+			} else {
+				
+				yEnd = y1;
+			}
+			
+			for(int y = yStart; y < yEnd; y++) {
+				
+				this.image.setPixel(x1, y, this.color);
+			}
+			
+		} else if(y1 == y2) {
+			
+			int xStart = x2;
+			int xEnd = x2;
+			
+			if(x1 < xStart) {
+				
+				xStart = x1;
+				
+			} else {
+				
+				xEnd = x1;
+			}
+			
+			for(int x = xStart; x < xEnd; x++) {
+				
+				this.image.setPixel(x, y1, this.color);
+			}
+			
+		} else {
+			
+			
+		}
 	}
 	
 	/**
