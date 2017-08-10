@@ -24,8 +24,12 @@
 package de.ralleytn.simple.image;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 /**
  * 
@@ -35,7 +39,10 @@ import java.awt.Point;
  */
 public class ImageEditor {
 
+	private static final Font DEFAULT_FONT = new Font(Font.MONOSPACED, 0, 18);
+	
 	private SimpleImage image;
+	private Font font;
 	private int color;
 	
 	/**
@@ -46,6 +53,7 @@ public class ImageEditor {
 	public ImageEditor(SimpleImage image) {
 		
 		this.image = image;
+		this.font = ImageEditor.DEFAULT_FONT;
 	}
 	
 	/**
@@ -65,7 +73,62 @@ public class ImageEditor {
 	 */
 	public void setColor(Color color) {
 		
-		this.color = color.getRGB();
+		this.color = color != null ? color.getRGB() : 0;
+	}
+	
+	/**
+	 * 
+	 * @param font
+	 * @since 1.2.0
+	 */
+	public void setFont(Font font) {
+		
+		this.font = font != null ? font : ImageEditor.DEFAULT_FONT;
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @param width
+	 * @param height
+	 * @since 1.2.0
+	 */
+	public void drawRect(Point position, int width, int height) {
+		
+		this.drawRect(position.x, position.y, width, height);
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void drawRect(int x, int y, Dimension size) {
+		
+		this.drawRect(x, y, size.width, size.height);
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @param size
+	 * @since 1.2.0
+	 */
+	public void drawRect(Point position, Dimension size) {
+		
+		this.drawRect(position.x, position.y, size.width, size.height);
+	}
+	
+	/**
+	 * 
+	 * @param rect
+	 * @since 1.2.0
+	 */
+	public void drawRect(Rectangle rect) {
+		
+		this.drawRect(rect.x, rect.y, rect.width, rect.height);
 	}
 	
 	/**
@@ -78,7 +141,94 @@ public class ImageEditor {
 	 */
 	public void drawRect(int x, int y, int width, int height) {
 		
+		int rightEnd = width - 1;
+		int bottomEnd = height - 1;
 		
+		for(int _x = 0; _x < width; _x++) {
+			
+			for(int _y = 0; _y < height; _y++) {
+
+				if(_x == 0 || _x == rightEnd || _y == 0 || _y == bottomEnd) {
+					
+					this.image.setPixel(x + _x, y + _y, this.color);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @param width
+	 * @param height
+	 * @param thickness
+	 * @since 1.2.0
+	 */
+	public void drawRect(Point position, int width, int height, int thickness) {
+		
+		this.drawRect(position.x, position.y, width, height, thickness);
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @param thickness
+	 * @since 1.2.0
+	 */
+	public void drawRect(int x, int y, Dimension size, int thickness) {
+		
+		this.drawRect(x, y, size.width, size.height, thickness);
+	}
+	
+	/**
+	 * 
+	 * @param position
+	 * @param size
+	 * @param thickness
+	 * @since 1.2.0
+	 */
+	public void drawRect(Point position, Dimension size, int thickness) {
+		
+		this.drawRect(position.x, position.y, size.width, size.height, thickness);
+	}
+	
+	/**
+	 * 
+	 * @param rect
+	 * @param thickness
+	 * @since 1.2.0
+	 */
+	public void drawRect(Rectangle rect, int thickness) {
+		
+		this.drawRect(rect.x, rect.y, rect.width, rect.height, thickness);
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 * @param thickness
+	 * @since 1.2.0
+	 */
+	public void drawRect(int x, int y, int width, int height, int thickness) {
+		
+		int rightEnd = width - 1;
+		int bottomEnd = height - 1;
+		
+		for(int _x = 0; _x < width; _x++) {
+			
+			for(int _y = 0; _y < height; _y++) {
+
+				if((_x >= 0 && _x <= thickness) || (_x >= rightEnd - thickness && _x <= rightEnd) || (_y >= 0 && _y <= thickness) || (_y >= bottomEnd - thickness && _y <= bottomEnd)) {
+					
+					this.image.setPixel(x + _x, y + _y, this.color);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -91,7 +241,13 @@ public class ImageEditor {
 	 */
 	public void fillRect(int x, int y, int width, int height) {
 		
-		
+		for(int _x = 0; _x < width; _x++) {
+			
+			for(int _y = 0; _y < height; _y++) {
+
+				this.image.setPixel(x + _x, y + _y, this.color);
+			}
+		}
 	}
 	
 	/**
@@ -103,7 +259,7 @@ public class ImageEditor {
 	 */
 	public void drawSquare(int x, int y, int size) {
 		
-		
+		this.drawRect(x, y, size, size);
 	}
 	
 	/**
@@ -115,7 +271,7 @@ public class ImageEditor {
 	 */
 	public void fillSquare(int x, int y, int size) {
 		
-		
+		this.fillRect(x, y, size, size);
 	}
 	
 	/**
@@ -153,7 +309,7 @@ public class ImageEditor {
 	 */
 	public void drawCircle(int x, int y, int size) {
 		
-		
+		this.drawOval(x, y, size, size);
 	}
 	
 	/**
@@ -165,7 +321,7 @@ public class ImageEditor {
 	 */
 	public void fillCircle(int x, int y, int size) {
 		
-		
+		this.fillOval(x, y, size, size);
 	}
 	
 	/**
@@ -232,7 +388,33 @@ public class ImageEditor {
 	 */
 	public void drawImage(Image image, int x, int y) {
 		
+		BufferedImage bimg = SimpleImage.__convert(image);
 		
+		for(int _x = 0; _x < bimg.getWidth(); _x++) {
+			
+			for(int _y = 0; _y < bimg.getHeight(); _y++) {
+
+				this.image.setPixel(x + _x, y + _y, bimg.getRGB(_x, _y));
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @param image
+	 * @param x
+	 * @param y
+	 * @since 1.2.0
+	 */
+	public void drawImage(SimpleImage image, int x, int y) {
+		
+		for(int _x = 0; _x < image.getWidth(); _x++) {
+			
+			for(int _y = 0; _y < image.getHeight(); _y++) {
+
+				this.image.setPixel(x + _x, y + _y, image.getPixel(_x, _y));
+			}
+		}
 	}
 	
 	/**
@@ -243,6 +425,16 @@ public class ImageEditor {
 	public int getColor() {
 		
 		return this.color;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 * @since 1.2.0
+	 */
+	public Font getFont() {
+		
+		return this.font;
 	}
 	
 	/**

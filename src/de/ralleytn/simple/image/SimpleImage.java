@@ -240,8 +240,11 @@ public class SimpleImage {
 	 */
 	public SimpleImage() throws AWTException {
 
+		// 10.08.2017
+		// Fixed a bug that would cause a NullPointerException because the 'data' array wasn't set
+		
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		SimpleImage.__read(new Robot().createScreenCapture(new Rectangle(0, 0, screenSize.width, screenSize.height)));
+		this.data = SimpleImage.__read(new Robot().createScreenCapture(new Rectangle(0, 0, screenSize.width, screenSize.height)));
 	}
 	
 	/**
@@ -414,6 +417,14 @@ public class SimpleImage {
 	public SimpleImage(InputStream inputStream) throws IOException {
 		
 		this.data = SimpleImage.__read(ImageIO.read(inputStream));
+	}
+	
+	public static void main(String[] args) {
+			SimpleImage image = new SimpleImage(300, 300);
+			ImageEditor editor = new ImageEditor(image);
+			editor.setColor(Color.BLACK);
+			editor.drawRect(100, 100, 100, 100, 5);
+			image.show();
 	}
 	
 	/**
@@ -1265,7 +1276,15 @@ public class SimpleImage {
 	 */
 	public int getPixel(int x, int y) {
 
-		return this.data[x][y];
+		// 10.08.2017
+		// Now returns an empty pixel if outside of bounds
+		
+		if(SimpleImage.__inBounds(x, y, 0, 0, this.getWidth(), this.getHeight())) {
+			
+			return this.data[x][y];
+		}
+		
+		return 0;
 	}
 	
 	/**
@@ -1511,6 +1530,9 @@ public class SimpleImage {
 	@SuppressWarnings("unchecked")
 	public static final SimpleImage getClipboardImage() throws UnsupportedFlavorException, IOException {
 		
+		// 09.08.2017
+		// Now able to get image from file that lies on clipboard
+		
 		Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 		SimpleImage image = null;
 		
@@ -1570,9 +1592,8 @@ public class SimpleImage {
 	}
 	
 	/**
-	 * 
-	 * @param position
-	 * @return
+	 * @param position position of the wanted pixel
+	 * @return the color of the pixel at the given position
 	 * @since 1.2.0
 	 */
 	public Color getColor(Point position) {
@@ -1581,9 +1602,9 @@ public class SimpleImage {
 	}
 	
 	/**
-	 * 
-	 * @param position
-	 * @param graphics
+	 * Paints this image on a {@linkplain Graphics} object.
+	 * @param position the position
+	 * @param graphics the {@linkplain Graphics} object on which this image should be painted
 	 * @since 1.2.0
 	 */
 	public void paintToGraphics(Point position, Graphics graphics) {
@@ -1592,10 +1613,10 @@ public class SimpleImage {
 	}
 	
 	/**
-	 * 
-	 * @param x
-	 * @param y
-	 * @param graphics
+	 * Paints this image on a {@linkplain Graphics} object.
+	 * @param x X position
+	 * @param y Y position
+	 * @param graphics the {@linkplain Graphics} object on which this image should be painted
 	 * @since 1.2.0
 	 */
 	public void paintToGraphics(int x, int y, Graphics graphics) {
@@ -1630,7 +1651,7 @@ public class SimpleImage {
 		return data;
 	}
 	
-	private static final BufferedImage __convert(Image image) {
+	static final BufferedImage __convert(Image image) {
 
 		if(image instanceof BufferedImage) {
 			
