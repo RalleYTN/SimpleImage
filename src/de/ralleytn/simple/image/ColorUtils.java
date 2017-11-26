@@ -27,12 +27,60 @@ package de.ralleytn.simple.image;
 /**
  * Provides methods for easier color manipulation.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
- * @version 1.0.0
+ * @version 1.2.0
  * @since 1.0.0
  */
 public final class ColorUtils {
 
+	/*
+	 * @since 1.0.0
+	 */
 	private ColorUtils() {}
+	
+	/**
+	 * 
+	 * @param bgPixel
+	 * @param fgPixel
+	 * @return
+	 * @since 1.2.0
+	 */
+	public static final int blend(int bgPixel, int fgPixel) {
+		
+		float bgRed = ColorUtils.getRed(bgPixel) / 255.0F;
+		float bgGreen = ColorUtils.getGreen(bgPixel) / 255.0F;
+		float bgBlue = ColorUtils.getBlue(bgPixel) / 255.0F;
+		float bgAlpha = ColorUtils.getAlpha(bgPixel) / 255.0F;
+		
+		float fgRed = ColorUtils.getRed(fgPixel) / 255.0F;
+		float fgGreen = ColorUtils.getGreen(fgPixel) / 255.0F;
+		float fgBlue = ColorUtils.getBlue(fgPixel) / 255.0F;
+		float fgAlpha = ColorUtils.getAlpha(fgPixel) / 255.0F;
+		
+		int newAlpha = 0;
+		int newRed = 0;
+		int newGreen = 0;
+		int newBlue = 0;
+		
+		float inverseAlpha = 1.0F - fgAlpha;
+		
+		if(bgAlpha == 255) {
+			
+			newAlpha = 255;
+			newRed = (int)(((fgRed * fgAlpha) + (bgRed * inverseAlpha)) * 255);
+			newGreen = (int)(((fgGreen * fgAlpha) + (bgGreen * inverseAlpha)) * 255);
+			newBlue = (int)(((fgBlue * fgAlpha) + (bgBlue * inverseAlpha)) * 255);
+			
+		} else {
+			
+			float alpha = (fgAlpha + (bgAlpha * inverseAlpha));
+			newAlpha = (int)(alpha * 255);
+			newRed = (int)(((((fgRed * fgAlpha) + (bgRed * bgAlpha * inverseAlpha))) / alpha) * 255);
+			newGreen = (int)(((((fgGreen * fgAlpha) + (bgGreen * bgAlpha * inverseAlpha))) / alpha) * 255);
+			newBlue = (int)(((((fgBlue * fgAlpha) + (bgBlue * bgAlpha * inverseAlpha))) / alpha) * 255);
+		}
+		
+		return ColorUtils.getARGB(newRed, newGreen, newBlue, newAlpha);
+	}
 	
 	/**
 	 * Makes sure that the given color channel is a value from 0 to 255.

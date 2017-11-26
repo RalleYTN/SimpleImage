@@ -56,6 +56,16 @@ public class ImageEditor {
 		this.font = ImageEditor.DEFAULT_FONT;
 	}
 	
+	public void setImage(SimpleImage image) {
+		
+		this.image = image;
+	}
+	
+	public void setImage(Image image) {
+		
+		this.image = new SimpleImage(image);
+	}
+	
 	/**
 	 * 
 	 * @param color
@@ -449,11 +459,35 @@ public class ImageEditor {
 	 */
 	public void drawImage(SimpleImage image, int x, int y) {
 		
+		this.drawImage(image, x, y, false);
+	}
+	
+	public void drawImage(Image image, int x, int y, boolean alphaBlending) {
+		
+		BufferedImage bimg = SimpleImage.__convert(image);
+		
+		for(int _x = 0; _x < bimg.getWidth(); _x++) {
+			
+			for(int _y = 0; _y < bimg.getHeight(); _y++) {
+
+				int pX = x + _x;
+				int pY = y + _y;
+				int fgPixel = bimg.getRGB(_x, _y);
+				this.image.setPixel(pX, pY, alphaBlending ? ColorUtils.blend(this.image.getPixel(pX, pY), fgPixel) : fgPixel);
+			}
+		}
+	}
+	
+	public void drawImage(SimpleImage image, int x, int y, boolean alphaBlending) {
+		
 		for(int _x = 0; _x < image.getWidth(); _x++) {
 			
 			for(int _y = 0; _y < image.getHeight(); _y++) {
 
-				this.image.setPixel(x + _x, y + _y, image.getPixel(_x, _y));
+				int pX = x + _x;
+				int pY = y + _y;
+				int fgPixel = image.getPixel(_x, _y);
+				this.image.setPixel(pX, pY, alphaBlending ? ColorUtils.blend(this.image.getPixel(pX, pY), fgPixel) : fgPixel);
 			}
 		}
 	}
