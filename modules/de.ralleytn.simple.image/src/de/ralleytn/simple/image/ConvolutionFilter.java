@@ -26,6 +26,8 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
  * Filter that applies a convolution matrix on an image.
  * @author Ralph Niemitz/RalleYTN
@@ -101,7 +103,7 @@ public class ConvolutionFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int[][] matrix = ConvolutionFilter.__getMatrix(x, y, kernelWidth, kernelHeight, source, this.edgeCondition);
 					
@@ -160,7 +162,7 @@ public class ConvolutionFilter extends Filter {
 			
 			for(int y = centerY - _centerY; y <= centerHeight; y++) {
 				
-				if(SimpleImage.__inBounds(x, y, 0, 0, imgWidth, imgHeight)) {
+				if(Utils.inBounds(x, y, 0, 0, imgWidth, imgHeight)) {
 					
 					matrix[matrixX][matrixY] = source[x][y];
 					

@@ -24,36 +24,17 @@
 
 package de.ralleytn.simple.image;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 import java.awt.Rectangle;
 
 /**
- * Filter that allows you to set the contrast of an image.
+ * Filter that inverts the red, green and blue channels of an image.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class ContrastFilter extends Filter {
-
-	private float factor;
-	
-	/**
-	 * @param contrast -1.0F = minimum contrast, 1.0F = maximum contrast
-	 * @since 1.0.0
-	 */
-	public ContrastFilter(float contrast) {
-		
-		if(contrast > 1.0F) {
-			
-			contrast = 1.0F;
-			
-		} else if(contrast < -1.0F) {
-			
-			contrast = -1.0F;
-		}
-		
-		int contrastInt = (int)(contrast * 255.0F);
-		this.factor = (259.0F * (contrastInt + 255.0F)) / (255.0F * (259.0F - contrastInt));
-	}
+public class InvertColorFilter extends Filter {
 
 	@Override
 	public void apply(int[][] source, int[][] target) {
@@ -68,25 +49,20 @@ public class ContrastFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int alpha = ColorUtils.getAlpha(srcPixel);
-					int red = ContrastFilter.__calculateColor(ColorUtils.getRed(srcPixel), this.factor);
-					int green = ContrastFilter.__calculateColor(ColorUtils.getGreen(srcPixel), this.factor);
-					int blue = ContrastFilter.__calculateColor(ColorUtils.getBlue(srcPixel), this.factor);
-
+					int red = 255 - ColorUtils.getRed(srcPixel);
+					int green = 255 - ColorUtils.getGreen(srcPixel);
+					int blue = 255 - ColorUtils.getBlue(srcPixel);
+					
 					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
-				
+					
 				} else {
 					
 					target[x][y] = srcPixel;
 				}
 			}
 		}
-	}
-	
-	private static final int __calculateColor(int input, float factor) {
-
-		return ColorUtils.truncate((int)((factor * (input - 128)) + 128));
 	}
 }

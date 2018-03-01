@@ -177,32 +177,4 @@ public final class ColorUtils {
 		int blue = (int)(((ColorUtils.getBlue(argb1) * ratio) + (ColorUtils.getBlue(argb2) * ratio2)) / 2);
 		return ColorUtils.getARGB(red, green, blue, alpha);
 	}
-	
-	static final int __max(int red, int green, int blue) {
-		
-		return Math.max(Math.max(red, green), blue);
-	}
-
-	static final int __min(int red, int green, int blue) {
-		
-		return Math.min(Math.min(red, green), blue);
-	}
-	
-	static final int __interpolateColorChannelBilinear(int pixelA, int pixelB, int pixelC, int pixelD, float diffX, float diffY, int channel) {
-		
-		float diffX2 = 1.0F - diffX;
-		float diffY2 = 1.0F - diffY;
-		
-		int pixelAChannel = (pixelA >> channel) & 0xFF;
-		int pixelBChannel = (pixelB >> channel) & 0xFF;
-		int pixelCChannel = (pixelC >> channel) & 0xFF;
-		int pixelDChannel = (pixelD >> channel) & 0xFF;
-		
-		float pixelAChannelPart = pixelAChannel * diffX2 * diffY2;
-		float pixelBChannelPart = pixelBChannel * diffX * diffY2;
-		float pixelCChannelPart = pixelCChannel * diffX2 * diffY;
-		float pixelDChannelPart = pixelDChannel * diffX * diffY;
-		
-		return (int)(pixelAChannelPart + pixelBChannelPart + pixelCChannelPart + pixelDChannelPart);
-	}
 }

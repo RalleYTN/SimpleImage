@@ -26,14 +26,27 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Filter that inverts the red, green and blue channels of an image.
+ * Grayscale filter that uses one of the original pixels channels as the new color.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class InvertColorFilter extends Filter {
-
+public class SingleChannelGrayscaleFilter extends Filter {
+	
+	private int shift = 0;
+	
+	/**
+	 * @param channel the color channel of the original pixel that determines the new pixels color
+	 * @since 1.0.0
+	 */
+	public SingleChannelGrayscaleFilter(ColorChannel channel) {
+		
+		this.shift = channel.getShift();
+	}
+	
 	@Override
 	public void apply(int[][] source, int[][] target) {
 		
@@ -47,14 +60,12 @@ public class InvertColorFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int alpha = ColorUtils.getAlpha(srcPixel);
-					int red = 255 - ColorUtils.getRed(srcPixel);
-					int green = 255 - ColorUtils.getGreen(srcPixel);
-					int blue = 255 - ColorUtils.getBlue(srcPixel);
+					int gray = (srcPixel >> this.shift) & 0xFF;
 					
-					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
+					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
 					
 				} else {
 					

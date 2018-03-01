@@ -26,44 +26,34 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Grayscale filter that mixes red, green and blue channel in specific ratios.
+ * Filter that changes the brightness of an image.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class LuminosityGrayscaleFilter extends Filter {
+public class BrightnessFilter extends Filter {
 
-	private float luminosityR;
-	private float luminosityG;
-	private float luminosityB;
+	private int brightness;
 	
 	/**
-	 * red = 0.21F, green = 0.72F, blue = 0.07F
+	 * @param brightness 0.0F = dark, 1.0F = bright
 	 * @since 1.0.0
 	 */
-	public LuminosityGrayscaleFilter() {
+	public BrightnessFilter(float brightness) {
 		
-		this(0.21F, 0.72F, 0.07F);
-	}
-	
-	/**
-	 * The sum must be 1.0F
-	 * @param luminosityR how much red should the new color have?
-	 * @param luminosityG how much green should the new color have?
-	 * @param luminosityB how much blue should the new color have?
-	 * @since 1.0.0
-	 */
-	public LuminosityGrayscaleFilter(float luminosityR, float luminosityG, float luminosityB) {
-		
-		if(luminosityR + luminosityG + luminosityB != 1) {
+		if(brightness > 1.0F) {
 			
-			throw new IllegalArgumentException("The luminosity has to be equal to 1!");
+			brightness = 1.0F;
+			
+		} else if(brightness < -1.0F) {
+			
+			brightness = -1.0F;
 		}
 		
-		this.luminosityR = luminosityR;
-		this.luminosityG = luminosityG;
-		this.luminosityB = luminosityB;
+		this.brightness = (int)(brightness * 255);
 	}
 	
 	@Override
@@ -79,15 +69,14 @@ public class LuminosityGrayscaleFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int alpha = ColorUtils.getAlpha(srcPixel);
-					int red = (int)(ColorUtils.getRed(srcPixel) * this.luminosityR);
-					int green = (int)(ColorUtils.getGreen(srcPixel) * this.luminosityG);
-					int blue = (int)(ColorUtils.getBlue(srcPixel) * this.luminosityB);
-					int gray = red + green + blue;
+					int red = ColorUtils.truncate(ColorUtils.getRed(srcPixel) + this.brightness);
+					int green = ColorUtils.truncate(ColorUtils.getGreen(srcPixel) + this.brightness);
+					int blue = ColorUtils.truncate(ColorUtils.getBlue(srcPixel) + this.brightness);
 					
-					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
 					
 				} else {
 					

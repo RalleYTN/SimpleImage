@@ -24,39 +24,55 @@
 
 package de.ralleytn.simple.image;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 import java.awt.Rectangle;
 
 /**
- * Grayscale filter that uses the color channel with either highest or the lowest value as
- * the new pixel color.
+ * Filter that only uses black and white.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class DecompositionGrayscaleFilter extends Filter {
+public class MonochromeFilter extends Filter {
 
-	/**
-	 * Use the color channel with the lowest value as new pixel color.
-	 * @since 1.0.0
-	 */
-	public static final int DECOMPOSITION_MINIMUM = 0;
+	private int threeshold;
+	private boolean invert;
 	
 	/**
-	 * Use the color channel with the highest value as new pixel color.
 	 * @since 1.0.0
 	 */
-	public static final int DECOMPOSITION_MAXIMUM = 1;
-	
-	private int decomposition;
-	
-	/**
-	 * @param decomposition should the color channel with the highest or the one with the lowest value
-	 *        be used as the new pixel color?
-	 * @since 1.0.0
-	 */
-	public DecompositionGrayscaleFilter(int decomposition) {
+	public MonochromeFilter() {
 		
-		this.decomposition = decomposition;
+		this(0.5F, false);
+	}
+	
+	/**
+	 * @param invert everything that would be black without this would be white with it
+	 * @since 1.0.0
+	 */
+	public MonochromeFilter(boolean invert) {
+		
+		this(0.5F, invert);
+	}
+	
+	/**
+	 * @param threeshold at which point should the color switch? (0.0F - 1.0F)
+	 * @since 1.0.0
+	 */
+	public MonochromeFilter(float threeshold) {
+		
+		this(threeshold, false);
+	}
+	
+	/**
+	 * @param threeshold at which point should the color switch? (0.0F - 1.0F)
+	 * @param invert everything that would be black without this would be white with it
+	 * @since 1.0.0
+	 */
+	public MonochromeFilter(float threeshold, boolean invert) {
+		
+		this.threeshold = (int)(threeshold * (255 * 3));
 	}
 	
 	@Override
@@ -72,24 +88,15 @@ public class DecompositionGrayscaleFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
-					int alpha = ColorUtils.getAlpha(srcPixel);
 					int red = ColorUtils.getRed(srcPixel);
 					int green = ColorUtils.getGreen(srcPixel);
 					int blue = ColorUtils.getBlue(srcPixel);
-					int gray = 0x00000000;
+					int sum = red + green + blue;
+					int color = this.invert ? (sum < this.threeshold ? 0xFFFFFFFF : 0) : (sum > this.threeshold ? 0xFFFFFFFF : 0xFF000000);
 					
-					if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MAXIMUM) {
-						
-						gray = ColorUtils.__max(red, green, blue);
-						
-					} else if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MINIMUM) {
-						
-						gray = ColorUtils.__min(red, green, blue);
-					}
-					
-					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
+					target[x][y] = ColorUtils.getARGB(color, color, color, 255);
 					
 				} else {
 					

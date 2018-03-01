@@ -26,34 +26,37 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Filter that changes the brightness of an image.
+ * Filter that allows you to set the contrast of an image.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class BrightnessFilter extends Filter {
+public class ContrastFilter extends Filter {
 
-	private int brightness;
+	private float factor;
 	
 	/**
-	 * @param brightness 0.0F = dark, 1.0F = bright
+	 * @param contrast -1.0F = minimum contrast, 1.0F = maximum contrast
 	 * @since 1.0.0
 	 */
-	public BrightnessFilter(float brightness) {
+	public ContrastFilter(float contrast) {
 		
-		if(brightness > 1.0F) {
+		if(contrast > 1.0F) {
 			
-			brightness = 1.0F;
+			contrast = 1.0F;
 			
-		} else if(brightness < -1.0F) {
+		} else if(contrast < -1.0F) {
 			
-			brightness = -1.0F;
+			contrast = -1.0F;
 		}
 		
-		this.brightness = (int)(brightness * 255);
+		int contrastInt = (int)(contrast * 255.0F);
+		this.factor = (259.0F * (contrastInt + 255.0F)) / (255.0F * (259.0F - contrastInt));
 	}
-	
+
 	@Override
 	public void apply(int[][] source, int[][] target) {
 		
@@ -67,20 +70,25 @@ public class BrightnessFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int alpha = ColorUtils.getAlpha(srcPixel);
-					int red = ColorUtils.truncate(ColorUtils.getRed(srcPixel) + this.brightness);
-					int green = ColorUtils.truncate(ColorUtils.getGreen(srcPixel) + this.brightness);
-					int blue = ColorUtils.truncate(ColorUtils.getBlue(srcPixel) + this.brightness);
-					
+					int red = ContrastFilter.__calculateColor(ColorUtils.getRed(srcPixel), this.factor);
+					int green = ContrastFilter.__calculateColor(ColorUtils.getGreen(srcPixel), this.factor);
+					int blue = ContrastFilter.__calculateColor(ColorUtils.getBlue(srcPixel), this.factor);
+
 					target[x][y] = ColorUtils.getARGB(red, green, blue, alpha);
-					
+				
 				} else {
 					
 					target[x][y] = srcPixel;
 				}
 			}
 		}
+	}
+	
+	private static final int __calculateColor(int input, float factor) {
+
+		return ColorUtils.truncate((int)((factor * (input - 128)) + 128));
 	}
 }

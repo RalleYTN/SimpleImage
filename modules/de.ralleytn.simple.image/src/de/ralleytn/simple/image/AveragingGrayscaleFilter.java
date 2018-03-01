@@ -26,56 +26,19 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Filter that only uses black and white.
+ * Grayscale filter that sets the RGB channels of a pixel to their average.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class MonochromeFilter extends Filter {
+public class AveragingGrayscaleFilter extends Filter {
 
-	private int threeshold;
-	private boolean invert;
-	
-	/**
-	 * @since 1.0.0
-	 */
-	public MonochromeFilter() {
-		
-		this(0.5F, false);
-	}
-	
-	/**
-	 * @param invert everything that would be black without this would be white with it
-	 * @since 1.0.0
-	 */
-	public MonochromeFilter(boolean invert) {
-		
-		this(0.5F, invert);
-	}
-	
-	/**
-	 * @param threeshold at which point should the color switch? (0.0F - 1.0F)
-	 * @since 1.0.0
-	 */
-	public MonochromeFilter(float threeshold) {
-		
-		this(threeshold, false);
-	}
-	
-	/**
-	 * @param threeshold at which point should the color switch? (0.0F - 1.0F)
-	 * @param invert everything that would be black without this would be white with it
-	 * @since 1.0.0
-	 */
-	public MonochromeFilter(float threeshold, boolean invert) {
-		
-		this.threeshold = (int)(threeshold * (255 * 3));
-	}
-	
 	@Override
 	public void apply(int[][] source, int[][] target) {
-		
+
 		int imgWidth = source.length;
 		int imgHeight = source[0].length;
 		Rectangle bounds = this.getBounds();
@@ -86,15 +49,15 @@ public class MonochromeFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
+					int alpha = ColorUtils.getAlpha(srcPixel);
 					int red = ColorUtils.getRed(srcPixel);
 					int green = ColorUtils.getGreen(srcPixel);
 					int blue = ColorUtils.getBlue(srcPixel);
-					int sum = red + green + blue;
-					int color = this.invert ? (sum < this.threeshold ? 0xFFFFFFFF : 0) : (sum > this.threeshold ? 0xFFFFFFFF : 0xFF000000);
+					int gray = (red + green + blue) / 3;
 					
-					target[x][y] = ColorUtils.getARGB(color, color, color, 255);
+					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
 					
 				} else {
 					

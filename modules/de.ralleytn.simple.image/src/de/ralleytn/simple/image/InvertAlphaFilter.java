@@ -26,13 +26,15 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Grayscale filter that desaturates the image.
- * @author Ralph Niemitz(ralph.niemitz@gmx.de)
+ * Filter that inverts the alpha channel of an image.
+ * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class DesaturationGrayscaleFilter extends Filter {
+public class InvertAlphaFilter extends Filter {
 
 	@Override
 	public void apply(int[][] source, int[][] target) {
@@ -46,21 +48,7 @@ public class DesaturationGrayscaleFilter extends Filter {
 			for(int y = 0; y < imgHeight; y++) {
 				
 				int srcPixel = source[x][y];
-				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
-					
-					int alpha = ColorUtils.getAlpha(srcPixel);
-					int red = ColorUtils.getRed(srcPixel);
-					int green = ColorUtils.getGreen(srcPixel);
-					int blue = ColorUtils.getBlue(srcPixel);
-					int gray = (ColorUtils.__max(red, green, blue) + ColorUtils.__min(red, green, blue)) / 2;
-					
-					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
-					
-				} else {
-					
-					target[x][y] = srcPixel;
-				}
+				target[x][y] = Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height) ? (srcPixel & 0x00FFFFFFFF) | (255 - ColorUtils.getAlpha(srcPixel)) : srcPixel;
 			}
 		}
 	}

@@ -65,6 +65,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
  * Represents an image. The image data is saved in a two dimensional integer array.
  * One integer saves a pixel with the color model ARGB. No hardware acceleration is possible with this class.
@@ -141,14 +143,14 @@ public class SimpleImage {
 	            float diffY = (ratioY * targetY) - srcY1;
 
 				int pixelA = source[srcX1][srcY1];
-				int pixelB = SimpleImage.__inBounds(srcX2, srcY1, 0, 0, srcWidth, srcHeight) ? source[srcX2][srcY1] : pixelA;
-				int pixelC = SimpleImage.__inBounds(srcX1, srcY2, 0, 0, srcWidth, srcHeight) ? source[srcX1][srcY2] : pixelA;
-				int pixelD = SimpleImage.__inBounds(srcX2, srcY2, 0, 0, srcWidth, srcHeight) ? source[srcX2][srcY2] : pixelA;
+				int pixelB = Utils.inBounds(srcX2, srcY1, 0, 0, srcWidth, srcHeight) ? source[srcX2][srcY1] : pixelA;
+				int pixelC = Utils.inBounds(srcX1, srcY2, 0, 0, srcWidth, srcHeight) ? source[srcX1][srcY2] : pixelA;
+				int pixelD = Utils.inBounds(srcX2, srcY2, 0, 0, srcWidth, srcHeight) ? source[srcX2][srcY2] : pixelA;
 
-				int alpha = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 24);
-				int red = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 16);
-				int green = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 8);
-				int blue = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 0);
+				int alpha = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 24);
+				int red = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 16);
+				int green = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 8);
+				int blue = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 0);
 				
 				target[targetX][targetY] = ColorUtils.getARGB(red, green, blue, alpha);
 			}
@@ -178,7 +180,7 @@ public class SimpleImage {
 				int x1 = (int)srcX;
 				int y1 = (int)srcY;
 				
-				if(SimpleImage.__inBounds(x1, y1, 0, 0, srcWidth, srcHeight)) {
+				if(Utils.inBounds(x1, y1, 0, 0, srcWidth, srcHeight)) {
 					
 					int x2 = (int)srcX + 1;
 					int y2 = (int)srcY + 1;
@@ -187,14 +189,14 @@ public class SimpleImage {
 					float diffY = (float)(srcY - (int)srcY);
 					
 					int pixelA = source[x1][y1];
-					int pixelB = SimpleImage.__inBounds(x2, y1, 0, 0, srcWidth, srcHeight) ? source[x2][y1] : pixelA;
-					int pixelC = SimpleImage.__inBounds(x1, y2, 0, 0, srcWidth, srcHeight) ? source[x1][y2] : pixelA;
-					int pixelD = SimpleImage.__inBounds(x2, y2, 0, 0, srcWidth, srcHeight) ? source[x2][y2] : pixelA;
+					int pixelB = Utils.inBounds(x2, y1, 0, 0, srcWidth, srcHeight) ? source[x2][y1] : pixelA;
+					int pixelC = Utils.inBounds(x1, y2, 0, 0, srcWidth, srcHeight) ? source[x1][y2] : pixelA;
+					int pixelD = Utils.inBounds(x2, y2, 0, 0, srcWidth, srcHeight) ? source[x2][y2] : pixelA;
 					
-					int alpha = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 24);
-					int red = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 16);
-					int green = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 8);
-					int blue = ColorUtils.__interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 0);
+					int alpha = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 24);
+					int red = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 16);
+					int green = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 8);
+					int blue = Utils.interpolateColorChannelBilinear(pixelA, pixelB, pixelC, pixelD, diffX, diffY, 0);
 					
 					target[targetX][targetY] = ColorUtils.getARGB(red, green, blue, alpha);
 				}
@@ -222,7 +224,7 @@ public class SimpleImage {
 				int srcY = (int)(rotationCenterX - ((rotationCenterY - targetY) * Math.cos(radians)) + ((rotationCenterY - targetX) * Math.sin(radians)));
 				int srcX = (int)(rotationCenterY - ((rotationCenterY - targetY) * Math.sin(radians)) - ((rotationCenterX - targetX) * Math.cos(radians)));
 
-				if(SimpleImage.__inBounds(srcX, srcY, 0, 0, srcWidth, srcHeight)) {
+				if(Utils.inBounds(srcX, srcY, 0, 0, srcWidth, srcHeight)) {
 
 					target[targetX][targetY] = source[srcX][srcY];
 				}
@@ -244,7 +246,7 @@ public class SimpleImage {
 		// Fixed a bug that would cause a NullPointerException because the 'data' array wasn't set
 		
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		this.data = SimpleImage.__read(new Robot().createScreenCapture(new Rectangle(0, 0, screenSize.width, screenSize.height)));
+		this.data = Utils.read(new Robot().createScreenCapture(new Rectangle(0, 0, screenSize.width, screenSize.height)));
 	}
 	
 	/**
@@ -286,7 +288,7 @@ public class SimpleImage {
 	 */
 	public SimpleImage(Image image) {
 		
-		this.data = SimpleImage.__read(image);
+		this.data = Utils.read(image);
 	}
 	
 	/**
@@ -299,7 +301,7 @@ public class SimpleImage {
 		
 		try(InputStream inputStream = new FileInputStream(new File(file))) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -313,7 +315,7 @@ public class SimpleImage {
 		
 		try(InputStream inputStream = Files.newInputStream(file)) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -327,7 +329,7 @@ public class SimpleImage {
 		
 		try(InputStream inputStream = new FileInputStream(file)) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -341,7 +343,7 @@ public class SimpleImage {
 		
 		try(InputStream inputStream = url.openStream()) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -355,7 +357,7 @@ public class SimpleImage {
 		
 		try(InputStream inputStream = uri.toURL().openStream()) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -371,7 +373,7 @@ public class SimpleImage {
 		try(ZipFile zip = new ZipFile(zipFile);
 			InputStream inputStream = zip.getInputStream(zip.getEntry(entry))) {
 			
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -387,7 +389,7 @@ public class SimpleImage {
 		try(ZipFile zip = new ZipFile(zipFile);
 			InputStream inputStream = zip.getInputStream(zip.getEntry(entry))) {
 				
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -403,7 +405,7 @@ public class SimpleImage {
 		try(ZipFile zip = new ZipFile(zipFile.toFile());
 			InputStream inputStream = zip.getInputStream(zip.getEntry(entry))) {
 				
-			this.data = SimpleImage.__read(ImageIO.read(inputStream));
+			this.data = Utils.read(ImageIO.read(inputStream));
 		}
 	}
 	
@@ -416,15 +418,7 @@ public class SimpleImage {
 	 */
 	public SimpleImage(InputStream inputStream) throws IOException {
 		
-		this.data = SimpleImage.__read(ImageIO.read(inputStream));
-	}
-	
-	public static void main(String[] args) {
-			SimpleImage image = new SimpleImage(300, 300);
-			ImageEditor editor = new ImageEditor(image);
-			editor.setColor(Color.BLACK);
-			editor.drawLine(200, 100, 100, 100);
-			image.show();
+		this.data = Utils.read(ImageIO.read(inputStream));
 	}
 	
 	/**
@@ -439,7 +433,7 @@ public class SimpleImage {
 		Graphics2D graphics = image.createGraphics();
 		callback.accept(graphics);
 		graphics.dispose();
-		SimpleImage.__read(image);
+		Utils.read(image);
 	}
 
 	/**
@@ -543,7 +537,7 @@ public class SimpleImage {
 		int imgWidth = this.data.length;
 		int imgHeight = this.data[0].length;
 		
-		if(SimpleImage.__inBounds(x, y, 0, 0, imgWidth, imgHeight)) {
+		if(Utils.inBounds(x, y, 0, 0, imgWidth, imgHeight)) {
 			
 			this.data[x][y] = pixel;
 		}
@@ -1043,7 +1037,7 @@ public class SimpleImage {
 			
 			for(int currentY = y; currentY < endY; currentY++) {
 			
-				target[targetX][targetY] = SimpleImage.__inBounds(currentX, currentY, 0, 0, imgWidth, imgHeight) ? this.data[currentX][currentY] : 0x00000000;
+				target[targetX][targetY] = Utils.inBounds(currentX, currentY, 0, 0, imgWidth, imgHeight) ? this.data[currentX][currentY] : 0x00000000;
 				this.data[currentX][currentY] = 0x00000000;
 				targetY++;
 			}
@@ -1279,7 +1273,7 @@ public class SimpleImage {
 		// 10.08.2017
 		// Now returns an empty pixel if outside of bounds
 		
-		if(SimpleImage.__inBounds(x, y, 0, 0, this.getWidth(), this.getHeight())) {
+		if(Utils.inBounds(x, y, 0, 0, this.getWidth(), this.getHeight())) {
 			
 			return this.data[x][y];
 		}
@@ -1631,48 +1625,5 @@ public class SimpleImage {
 				graphics.drawLine(xp, yp, xp, yp);
 			}
 		}
-	}
-	
-	private static final int[][] __read(Image image) {
-		
-		BufferedImage imageToRead = SimpleImage.__convert(image);
-		int width = imageToRead.getWidth();
-		int height = imageToRead.getHeight();
-		int[][] data = new int[width][height];
-		
-		for(int x = 0; x < width; x++) {
-			
-			for(int y = 0; y < height; y++) {
-				
-				data[x][y] = imageToRead.getRGB(x, y);
-			}
-		}
-		
-		return data;
-	}
-	
-	static final BufferedImage __convert(Image image) {
-
-		if(image instanceof BufferedImage) {
-			
-			BufferedImage convertedImage = (BufferedImage)image;
-			
-			if(convertedImage.getType() == BufferedImage.TYPE_INT_ARGB) {
-				
-				return convertedImage;
-			}
-		}
-		
-		BufferedImage convertedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-		Graphics graphics = convertedImage.createGraphics();
-		graphics.drawImage(image, 0, 0, null);
-		graphics.dispose();
-		
-		return convertedImage;
-	}
-	
-	static final boolean __inBounds(int posX, int posY, int boundsX, int boundsY, int boundsWidth, int boundsHeight) {
-		
-		return posX >= boundsX && posX < boundsX + boundsWidth && posY >= boundsY && posY < boundsY + boundsHeight;
 	}
 }

@@ -26,23 +26,39 @@ package de.ralleytn.simple.image;
 
 import java.awt.Rectangle;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
- * Grayscale filter that uses one of the original pixels channels as the new color.
+ * Grayscale filter that uses the color channel with either highest or the lowest value as
+ * the new pixel color.
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
  * @version 1.0.0
  * @since 1.0.0
  */
-public class SingleChannelGrayscaleFilter extends Filter {
-	
-	private int shift = 0;
-	
+public class DecompositionGrayscaleFilter extends Filter {
+
 	/**
-	 * @param channel the color channel of the original pixel that determines the new pixels color
+	 * Use the color channel with the lowest value as new pixel color.
 	 * @since 1.0.0
 	 */
-	public SingleChannelGrayscaleFilter(ColorChannel channel) {
+	public static final int DECOMPOSITION_MINIMUM = 0;
+	
+	/**
+	 * Use the color channel with the highest value as new pixel color.
+	 * @since 1.0.0
+	 */
+	public static final int DECOMPOSITION_MAXIMUM = 1;
+	
+	private int decomposition;
+	
+	/**
+	 * @param decomposition should the color channel with the highest or the one with the lowest value
+	 *        be used as the new pixel color?
+	 * @since 1.0.0
+	 */
+	public DecompositionGrayscaleFilter(int decomposition) {
 		
-		this.shift = channel.getShift();
+		this.decomposition = decomposition;
 	}
 	
 	@Override
@@ -58,10 +74,22 @@ public class SingleChannelGrayscaleFilter extends Filter {
 				
 				int srcPixel = source[x][y];
 				
-				if(SimpleImage.__inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
+				if(Utils.inBounds(x, y, bounds.x, bounds.y, bounds.width, bounds.height)) {
 					
 					int alpha = ColorUtils.getAlpha(srcPixel);
-					int gray = (srcPixel >> this.shift) & 0xFF;
+					int red = ColorUtils.getRed(srcPixel);
+					int green = ColorUtils.getGreen(srcPixel);
+					int blue = ColorUtils.getBlue(srcPixel);
+					int gray = 0x00000000;
+					
+					if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MAXIMUM) {
+						
+						gray = Utils.max(red, green, blue);
+						
+					} else if(this.decomposition == DecompositionGrayscaleFilter.DECOMPOSITION_MINIMUM) {
+						
+						gray = Utils.min(red, green, blue);
+					}
 					
 					target[x][y] = ColorUtils.getARGB(gray, gray, gray, alpha);
 					

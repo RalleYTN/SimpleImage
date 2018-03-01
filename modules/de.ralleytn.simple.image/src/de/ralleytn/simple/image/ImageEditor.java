@@ -31,6 +31,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
+import de.ralleytn.simple.image.internal.Utils;
+
 /**
  * 
  * @author Ralph Niemitz/RalleYTN(ralph.niemitz@gmx.de)
@@ -439,7 +441,7 @@ public class ImageEditor {
 	 */
 	public void drawImage(Image image, int x, int y) {
 		
-		BufferedImage bimg = SimpleImage.__convert(image);
+		BufferedImage bimg = Utils.convert(image);
 		
 		for(int _x = 0; _x < bimg.getWidth(); _x++) {
 			
@@ -464,7 +466,7 @@ public class ImageEditor {
 	
 	public void drawImage(Image image, int x, int y, boolean alphaBlending) {
 		
-		BufferedImage bimg = SimpleImage.__convert(image);
+		BufferedImage bimg = Utils.convert(image);
 		
 		for(int _x = 0; _x < bimg.getWidth(); _x++) {
 			
